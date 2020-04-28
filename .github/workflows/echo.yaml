@@ -17,6 +17,8 @@ jobs:
       uses: actions/checkout@master
 
     - name: Echoer
+      env:
+        TEST: ${{ secrets.TEST}} 
       run: |
-        echo ${{ secrets.TEST}}
+        echo $TEST
 
