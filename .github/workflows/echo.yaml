@@ -20,5 +20,5 @@ jobs:
       env:
         TEST: ${{ secrets.TEST}} 
       run: |
-        echo $TEST
+        printf $TEST
 
