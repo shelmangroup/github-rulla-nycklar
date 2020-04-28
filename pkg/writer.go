@@ -29,13 +29,13 @@ type SecretWriter struct {
 }
 
 // Write encrypts and writes a Github secret to Github using the API.
-func (s SecretWriter) Write(owner, repo, sname string, svalue []byte) (string, error) {
+func (s SecretWriter) Write(owner, repo, secretName string, secretValue []byte) (string, error) {
 	publicKeyId, publicKey, err := s.getPublicKey(owner, repo)
 	if err != nil {
 		return "", err
 	}
 
-	encryptedValue, err := encryptValue(svalue, publicKey)
+	encryptedValue, err := encryptValue(secretValue, publicKey)
 	if err != nil {
 		return "", err
 	}
@@ -45,7 +45,7 @@ func (s SecretWriter) Write(owner, repo, sname string, svalue []byte) (string, e
 		owner,
 		repo,
 		&github.EncryptedSecret{
-			Name:           sname,
+			Name:           secretName,
 			KeyID:          publicKeyId,
 			EncryptedValue: base64.StdEncoding.EncodeToString(encryptedValue),
 		})
