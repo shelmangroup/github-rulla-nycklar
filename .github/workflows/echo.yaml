@@ -1,0 +1,22 @@
+name: echoer
+
+on:
+  push:
+    branches:
+    - master
+    paths-ignore:
+    - 'README.md'
+
+jobs:
+  run-echo:
+    name: secrets change test 
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Echoer
+      run: |
+        echo ${{ secrets.TEST}}
+
