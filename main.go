@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
@@ -12,10 +13,8 @@ import (
 
 var owner = "shelmangroup"
 var repo = "github-secrets-sync"
-var secretName = "TEST"
-var secretValue = []byte("super secret value")
+var secretName = "GOOGLE_APPLICATION_CREDENTIALS"
 var testEmail = "github-test@xXxXx.iam.gserviceaccount.com"
-var testProject = "xXxXx"
 
 type IamServiceAccountClient struct {
 	service *iam.Service
@@ -73,7 +72,13 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 		return nil, err
 	}
 
+	// cant be deleted, should always exist even if no user keys have ben added
+	systemManagedKey := keys[len(keys)-1]
+
 	for _, key := range keys {
+		if systemManagedKey.Name == key.Name {
+			continue
+		}
 		err = i.deleteKey(key.Name)
 		if err != nil {
 			return nil, err
@@ -94,8 +99,17 @@ func main() {
 		log.Fatal("Unauthorized: No token present")
 	}
 
+	iamClient := NewIamClient()
+	key, err := iamClient.rotateKey(testEmail)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
+	log.Println(string(keyDecoded))
+
 	writer := gsw.NewSecretWriter(token)
-	status, err := writer.Write(owner, repo, secretName, secretValue)
+	status, err := writer.Write(owner, repo, secretName, keyDecoded)
 	if err != nil {
 		log.Printf("Ops.. %s\n", err.Error())
 	} else {
