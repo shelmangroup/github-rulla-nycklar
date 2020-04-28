@@ -1,0 +1,21 @@
+name: on-pr go build/test
+
+on:
+  push:
+    paths-ignore:
+    - 'template/**'
+    branches-ignore:
+    - 'master'
+
+jobs:
+  go-build:
+    name: go build test fmt check
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@master
+
+    # Build the Docker image
+    - name: Build
+      run: make container        
