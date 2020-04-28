@@ -3,20 +3,36 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
-	"github.com/google/go-github/v31/github"
 	gsw "github.com/shelmangroup/github-secrets-sync/pkg"
-	"golang.org/x/oauth2"
+	"google.golang.org/api/iam/v1"
 )
 
-var client *github.Client
-var ctx = context.Background()
 var owner = "shelmangroup"
 var repo = "github-secrets-sync"
 var secretName = "TEST"
 var secretValue = []byte("super secret value")
+
+// createKey creates a service account key.
+func rotateServiceAccountKey(w io.Writer, serviceAccountEmail string) (*iam.ServiceAccountKey, error) {
+	ctx := context.Background()
+	service, err := iam.NewService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("iam.NewService: %v", err)
+	}
+
+	resource := "projects/-/serviceAccounts/" + serviceAccountEmail
+	request := &iam.CreateServiceAccountKeyRequest{}
+	key, err := service.Projects.ServiceAccounts.Keys.Create(resource, request).Do()
+	if err != nil {
+		return nil, fmt.Errorf("Projects.ServiceAccounts.Keys.Create: %v", err)
+	}
+	fmt.Fprintf(w, "Created key: %v", key.Name)
+	return key, nil
+}
 
 func main() {
 	fmt.Println("vim-go")
@@ -24,17 +40,6 @@ func main() {
 	token := os.Getenv("GITHUB_AUTH_TOKEN")
 	if token == "" {
 		log.Fatal("Unauthorized: No token present")
-	}
-
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(ctx, ts)
-	client = github.NewClient(tc)
-
-	secret, _, err := client.Actions.GetSecret(ctx, owner, repo, secretName)
-	if err != nil {
-		log.Printf("Ops.. %s\n", err.Error())
-	} else {
-		log.Printf("secret: %+v", secret)
 	}
 
 	writer := gsw.NewSecretWriter(token)
