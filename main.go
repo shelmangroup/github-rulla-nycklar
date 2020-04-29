@@ -4,17 +4,35 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
+	"net/http"
 	"os"
+	"strings"
 
+	"github.com/google/go-github/v31/github"
+
+	"github.com/bradleyfalzon/ghinstallation"
+	joonix "github.com/joonix/log"
 	gsw "github.com/shelmangroup/github-secrets-sync/pkg"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iam/v1"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-var owner = "shelmangroup"
-var repo = "github-secrets-sync"
-var secretName = "GOOGLE_APPLICATION_CREDENTIALS"
-var testEmail = "github-test@xXxXx.iam.gserviceaccount.com"
+var (
+	logJSON    = kingpin.Flag("log-json", "Use structured logging in JSON format").Default("false").Bool()
+	logFluentd = kingpin.Flag("log-fluentd", "Use structured logging in GKE Fluentd format").Default("false").Bool()
+	logLevel   = kingpin.Flag("log-level", "The level of logging").Default("info").Enum("debug", "info", "warn", "error", "panic", "fatal")
+	keyFile    = kingpin.Flag("github-key-file", "PEM file for signed requests").Required().ExistingFile()
+	appID      = kingpin.Flag("github-app-id", "GitHub App ID").Required().Int64()
+
+	owner = kingpin.Flag("owner", "Github Owner/User").Required().String()
+	repo  = kingpin.Flag("repo", "Github Repo").Required().String()
+
+	// "github-test@xXxXx.iam.gserviceaccount.com"
+	serviceAccountEmail = kingpin.Flag("service-account", "Google Service Account Email").Required().String()
+
+	secretName = kingpin.Flag("secret-name", "Github Secret name").Default("GOOGLE_APPLICATION_CREDENTIALS").String()
+)
 
 type IamServiceAccountClient struct {
 	service *iam.Service
@@ -94,22 +112,57 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 }
 
 func main() {
-	token := os.Getenv("GITHUB_AUTH_TOKEN")
-	if token == "" {
-		log.Fatal("Unauthorized: No token present")
+
+	kingpin.HelpFlag.Short('h')
+	kingpin.CommandLine.DefaultEnvars()
+	kingpin.Parse()
+
+	switch strings.ToLower(*logLevel) {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
 	}
 
+	if *logJSON {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
+	if *logFluentd {
+		log.SetFormatter(joonix.NewFormatter())
+	}
+
+	log.SetOutput(os.Stderr)
+
+	// rotate and get new key
 	iamClient := NewIamClient()
-	key, err := iamClient.rotateKey(testEmail)
+	key, err := iamClient.rotateKey(*serviceAccountEmail)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
 	log.Println(string(keyDecoded))
+	//
 
-	writer := gsw.NewSecretWriter(token)
-	status, err := writer.Write(owner, repo, secretName, keyDecoded)
+	// Shared transport to reuse TCP connections.
+	tr := http.DefaultTransport
+	atr, err := ghinstallation.NewAppsTransportKeyFromFile(tr, *appID, *keyFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Use installation transport with github.com/google/go-github
+	githubClient := github.NewClient(&http.Client{Transport: atr})
+	//
+
+	writer := gsw.NewSecretWriter(githubClient)
+	status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
 	if err != nil {
 		log.Printf("Ops.. %s\n", err.Error())
 	} else {
