@@ -5,21 +5,14 @@ import (
 	"encoding/base64"
 
 	"github.com/google/go-github/v31/github"
-	"golang.org/x/oauth2"
 )
 
 // copy from https://github.com/doodlesbykumbi/github-secrets-writer
 
 // NewSecretWriter creates a SecretWriter that uses the Github OAuth token provided for API calls.
-func NewSecretWriter(token string) *SecretWriter {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
+func NewSecretWriter(client *github.Client) *SecretWriter {
 	return &SecretWriter{
-		client: github.NewClient(tc),
+		client: client,
 	}
 }
 
