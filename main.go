@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -139,16 +138,16 @@ func main() {
 
 	log.SetOutput(os.Stderr)
 
-	// rotate and get new key
-	iamClient := NewIamClient()
-	key, err := iamClient.rotateKey(*serviceAccountEmail)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
-	log.Println(string(keyDecoded))
-	//
+	/*	// rotate and get new key
+		iamClient := NewIamClient()
+		key, err := iamClient.rotateKey(*serviceAccountEmail)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
+		log.Println(string(keyDecoded))
+		//
+	*/
 
 	// Shared transport to reuse TCP connections.
 	tr := http.DefaultTransport
@@ -161,12 +160,29 @@ func main() {
 	githubClient := github.NewClient(&http.Client{Transport: atr})
 	//
 
-	writer := gsw.NewSecretWriter(githubClient)
-	status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
+	//
+	ctx := context.Background()
+	installs, _, err := githubClient.Apps.ListInstallations(ctx, nil)
 	if err != nil {
-		log.Printf("Ops.. %s\n", err.Error())
-	} else {
-		log.Printf("secret write status: %s\n", status)
+		log.Fatal(err)
+	}
+	//
+
+	for _, install := range installs {
+		log.Debugf("installationID: %v", install.GetID())
+		log.Debugf("Install: %+v", install)
+
+		itr := ghinstallation.NewFromAppsTransport(atr, install.GetID())
+		ic := github.NewClient(&http.Client{Transport: itr})
+
+		writer := gsw.NewSecretWriter(ic)
+		status, err := writer.Write(*owner, *repo, *secretName, []byte("super secret string"))
+		if err != nil {
+			log.Printf("Ops.. %s\n", err.Error())
+		} else {
+			log.Printf("secret write status: %s\n", status)
+		}
+
 	}
 
 }
