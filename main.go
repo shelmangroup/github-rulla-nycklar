@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
 
 	"github.com/google/go-github/v31/github"
 
@@ -35,10 +38,10 @@ var (
 
 type IamServiceAccountClient struct {
 	service *iam.Service
+	ctx     *context.Context
 }
 
-func NewIamClient() *IamServiceAccountClient {
-	ctx := context.Background()
+func NewIamClient(ctx context.Context) *IamServiceAccountClient {
 	service, err := iam.NewService(ctx)
 	if err != nil {
 		log.Fatalf("iam.NewService: %v", err)
@@ -88,6 +91,7 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf(spew.Sprintf("service account keys: %+v", keys))
 
 	// cant be deleted, should always exist even if no user keys have ben added
 	systemManagedKey := keys[len(keys)-1]
@@ -138,26 +142,15 @@ func main() {
 
 	log.SetOutput(os.Stderr)
 
-	/*	// rotate and get new key
-		iamClient := NewIamClient()
-		key, err := iamClient.rotateKey(*serviceAccountEmail)
-		if err != nil {
-			log.Fatal(err)
-		}
-		keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
-		log.Println(string(keyDecoded))
-		//
-	*/
-
 	// Shared transport to reuse TCP connections.
-	tr := http.DefaultTransport
-	atr, err := ghinstallation.NewAppsTransportKeyFromFile(tr, *appID, *keyFile)
+	transport := http.DefaultTransport
+	appTransport, err := ghinstallation.NewAppsTransportKeyFromFile(transport, *appID, *keyFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Use installation transport with github.com/google/go-github
-	githubClient := github.NewClient(&http.Client{Transport: atr})
+	githubClient := github.NewClient(&http.Client{Transport: appTransport})
 	//
 
 	//
@@ -168,15 +161,36 @@ func main() {
 	}
 	//
 
+	/*
+		should only be one install since not a application that is shared.
+		you can get the install id on github in the org setting page to
+		if you do  you can skip the for loop and init a new client
+		with the install id.
+
+		to find the install id on github go to
+		Org > Settings > Installed Github Apps > AppName > Configure
+		in the URL you can see the install ID
+		https://github.com/organizations/<ORG>/settings/installations/<install id>
+	*/
 	for _, install := range installs {
 		log.Debugf("installationID: %v", install.GetID())
 		log.Debugf("Install: %+v", install)
 
-		itr := ghinstallation.NewFromAppsTransport(atr, install.GetID())
+		// rotate and get new key
+		iamClient := NewIamClient(ctx)
+		key, err := iamClient.rotateKey(*serviceAccountEmail)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
+		log.Println(string(keyDecoded))
+		//
+
+		itr := ghinstallation.NewFromAppsTransport(appTransport, install.GetID())
 		ic := github.NewClient(&http.Client{Transport: itr})
 
 		writer := gsw.NewSecretWriter(ic)
-		status, err := writer.Write(*owner, *repo, *secretName, []byte("super secret string"))
+		status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
 		if err != nil {
 			log.Printf("Ops.. %s\n", err.Error())
 		} else {
