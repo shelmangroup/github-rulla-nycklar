@@ -26,6 +26,7 @@ var (
 	logLevel   = kingpin.Flag("log-level", "The level of logging").Default("info").Enum("debug", "info", "warn", "error", "panic", "fatal")
 	keyFile    = kingpin.Flag("github-key-file", "PEM file for signed requests").Required().ExistingFile()
 	appID      = kingpin.Flag("github-app-id", "GitHub App ID").Required().Int64()
+	installid  = kingpin.Flag("github-install-id", "GitHub Install ID").Required().Int64()
 
 	owner = kingpin.Flag("owner", "Github Owner/User").Required().String()
 	repo  = kingpin.Flag("repo", "Github Repo").Required().String()
@@ -150,53 +151,36 @@ func main() {
 	}
 
 	// Use installation transport with github.com/google/go-github
-	githubClient := github.NewClient(&http.Client{Transport: appTransport})
+	installTransport := ghinstallation.NewFromAppsTransport(appTransport, *installid)
+	githubClient := github.NewClient(&http.Client{Transport: installTransport})
 	//
 
 	//
 	ctx := context.Background()
-	installs, _, err := githubClient.Apps.ListInstallations(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	iamClient := NewIamClient(ctx)
 	//
 
 	/*
-		should only be one install since not a application that is shared.
-		you can get the install id on github in the org setting page to
-		if you do  you can skip the for loop and init a new client
-		with the install id.
-
-		to find the install id on github go to
+		To find the install id on github go to
 		Org > Settings > Installed Github Apps > AppName > Configure
 		in the URL you can see the install ID
 		https://github.com/organizations/<ORG>/settings/installations/<install id>
 	*/
-	for _, install := range installs {
-		log.Debugf("installationID: %v", install.GetID())
-		log.Debugf("Install: %+v", install)
 
-		// rotate and get new key
-		iamClient := NewIamClient(ctx)
-		key, err := iamClient.rotateKey(*serviceAccountEmail)
-		if err != nil {
-			log.Fatal(err)
-		}
-		keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
-		log.Println(string(keyDecoded))
-		//
+	key, err := iamClient.rotateKey(*serviceAccountEmail)
+	if err != nil {
+		log.Fatal(err)
+	}
+	keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
+	log.Println(string(keyDecoded))
+	//
 
-		itr := ghinstallation.NewFromAppsTransport(appTransport, install.GetID())
-		ic := github.NewClient(&http.Client{Transport: itr})
-
-		writer := gsw.NewSecretWriter(ic)
-		status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
-		if err != nil {
-			log.Printf("Ops.. %s\n", err.Error())
-		} else {
-			log.Printf("secret write status: %s\n", status)
-		}
-
+	writer := gsw.NewSecretWriter(githubClient)
+	status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
+	if err != nil {
+		log.Printf("Ops.. %s\n", err.Error())
+	} else {
+		log.Printf("secret write status: %s\n", status)
 	}
 
 }
