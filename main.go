@@ -100,6 +100,7 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 		if systemManagedKey.Name == key.Name {
 			continue
 		}
+
 		err = i.deleteKey(key.Name)
 		if err != nil {
 			return nil, err
