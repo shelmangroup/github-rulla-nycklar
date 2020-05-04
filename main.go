@@ -14,7 +14,7 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation"
 	joonix "github.com/joonix/log"
-	gsw "github.com/shelmangroup/github-secrets-sync/pkg"
+	gsw "github.com/shelmangroup/github-rulla-nycklar/pkg"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/iam/v1"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,7 +31,7 @@ var (
 	owner                   = kingpin.Flag("owner", "Github Owner/User").Required().String()
 	repoToServiceAccountMap = kingpin.Flag("repo-to-email", "Google service account to github repo in format of repo=email").Required().StringMap()
 
-	// "github-secrets-sync=github-test@xXxXx.iam.gserviceaccount.com"
+	// "github-rulla-nycklar=github-test@xXxXx.iam.gserviceaccount.com"
 
 	secretName = kingpin.Flag("secret-name", "Github Secret name").Default("GOOGLE_APPLICATION_CREDENTIALS").String()
 )

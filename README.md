@@ -1,4 +1,4 @@
-# github-secrets-sync
+# github-rulla-nycklar
 
 
 ### Problem statement
@@ -23,7 +23,7 @@ limitations.
 
 ```bash
 
-./_bin/github-secrets-sync \
+./_bin/github-rulla-nycklar \
     --github-key-file="<name of key>.private-key.pem" \
     --github-app-id=<id> \
     --github-install-id=<id> \

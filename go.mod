@@ -1,4 +1,4 @@
-module github.com/shelmangroup/github-secrets-sync
+module github.com/shelmangroup/github-rulla-nycklar
 
 go 1.14
 
