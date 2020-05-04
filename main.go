@@ -28,11 +28,10 @@ var (
 	appID      = kingpin.Flag("github-app-id", "GitHub App ID").Required().Int64()
 	installid  = kingpin.Flag("github-install-id", "GitHub Install ID").Required().Int64()
 
-	owner = kingpin.Flag("owner", "Github Owner/User").Required().String()
-	repo  = kingpin.Flag("repo", "Github Repo").Required().String()
+	owner                   = kingpin.Flag("owner", "Github Owner/User").Required().String()
+	repoToServiceAccountMap = kingpin.Flag("repo-to-email", "Google service account to github repo in format of repo=email").Required().StringMap()
 
-	// "github-test@xXxXx.iam.gserviceaccount.com"
-	serviceAccountEmail = kingpin.Flag("service-account", "Google Service Account Email").Required().String()
+	// "github-secrets-sync=github-test@xXxXx.iam.gserviceaccount.com"
 
 	secretName = kingpin.Flag("secret-name", "Github Secret name").Default("GOOGLE_APPLICATION_CREDENTIALS").String()
 )
@@ -153,6 +152,7 @@ func main() {
 	// Use installation transport with github.com/google/go-github
 	installTransport := ghinstallation.NewFromAppsTransport(appTransport, *installid)
 	githubClient := github.NewClient(&http.Client{Transport: installTransport})
+	secretWriter := gsw.NewSecretWriter(githubClient)
 	//
 
 	//
@@ -167,20 +167,29 @@ func main() {
 		https://github.com/organizations/<ORG>/settings/installations/<install id>
 	*/
 
-	key, err := iamClient.rotateKey(*serviceAccountEmail)
-	if err != nil {
-		log.Fatal(err)
+	getKey := func(email string) []byte {
+		key, err := iamClient.rotateKey(email)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
+		return keyDecoded
 	}
-	keyDecoded, _ := base64.URLEncoding.DecodeString(key.PrivateKeyData)
-	log.Println(string(keyDecoded))
 	//
 
-	writer := gsw.NewSecretWriter(githubClient)
-	status, err := writer.Write(*owner, *repo, *secretName, keyDecoded)
-	if err != nil {
-		log.Printf("Ops.. %s\n", err.Error())
-	} else {
-		log.Printf("secret write status: %s\n", status)
+	writeSecret := func(repo string, key []byte) {
+		status, err := secretWriter.Write(*owner, repo, *secretName, key)
+		if err != nil {
+			log.Errorf("Ops.. %s\n", err.Error())
+		} else {
+			log.Infof("secret write status: %s\n", status)
+		}
+	}
+
+	for repo, email := range *repoToServiceAccountMap {
+		log.Debugf("repo=email (%v=%v)", repo, email)
+		keyBytes := getKey(email)
+		writeSecret(repo, keyBytes)
 	}
 
 }
