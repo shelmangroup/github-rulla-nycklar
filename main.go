@@ -37,6 +37,26 @@ var (
 	secretName = kingpin.Flag("secret-name", "Github Secret name").Default("GOOGLE_APPLICATION_CREDENTIALS").String()
 )
 
+func validateRepoToServiceAccountMap(input map[string]string) bool {
+	knownEmails := make(map[string]string)
+	for repo, email := range input {
+		log.Debugf("validate repo email input repo=email (%v=%v)", repo, email)
+		ok := validateGoogleServiceAccountEmail(email)
+		if !ok {
+			return false
+		}
+
+		if _, present := knownEmails[email]; present {
+			log.Errorf("service account email (%v) is already used, duplicate service accounts is not supported", email)
+			return false
+		}
+
+		knownEmails[email] = ""
+	}
+
+	return true
+}
+
 func validateGoogleServiceAccountEmail(email string) bool {
 	match, _ := regexp.MatchString("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.iam\\.gserviceaccount\\.com$)", email)
 	return match
@@ -143,6 +163,11 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.CommandLine.DefaultEnvars()
 	kingpin.Parse()
+
+	ok := validateRepoToServiceAccountMap(*repoToServiceAccountMap)
+	if !ok {
+		log.Fatalf("invalid input from flag --repo-to-email got: %v", *repoToServiceAccountMap)
+	}
 
 	switch strings.ToLower(*logLevel) {
 	case "debug":

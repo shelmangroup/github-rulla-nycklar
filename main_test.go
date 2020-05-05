@@ -111,3 +111,39 @@ func TestProjectFromServiceAccount(t *testing.T) {
 		assert.Equal(t, tc.expected, getProjectFromServiceAccount(tc.email), tc.email)
 	}
 }
+
+func TestValidateRepoToServiceAccountMap(t *testing.T) {
+	testCases := []struct {
+		expected bool
+		input    map[string]string
+	}{
+		{
+			expected: true,
+			input: map[string]string{
+				"foo": "test-foo@one-123.iam.gserviceaccount.com",
+				"bar": "test-bar@two-123.iam.gserviceaccount.com",
+			},
+		},
+
+		// the same service account is used in multiple repos
+		{
+			expected: false,
+			input: map[string]string{
+				"foo": "test-foo@one-123.iam.gserviceaccount.com",
+				"bar": "test-foo@one-123.iam.gserviceaccount.com",
+			},
+		},
+
+		{
+			expected: false,
+			input: map[string]string{
+				"foo": "foo@example.com",
+				"bar": "bar@example.com",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		assert.Equal(t, tc.expected, validateRepoToServiceAccountMap(tc.input), tc.input)
+	}
+}
