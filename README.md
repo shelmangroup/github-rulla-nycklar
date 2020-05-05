@@ -21,6 +21,10 @@ limitations.
 
 ### Usage
 
+finding github install id To find the install id on github go to 
+`Org > Settings > Installed Github Apps > AppName > Configure` in the URL you 
+can see the install ID `https://github.com/organizations/<ORG>/settings/installations/<install id>`
+
 ```bash
 
 ./_bin/github-rulla-nycklar \
