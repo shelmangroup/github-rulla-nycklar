@@ -59,59 +59,6 @@ func TestValidateServiceAccount(t *testing.T) {
 	}
 }
 
-func TestProjectFromServiceAccount(t *testing.T) {
-	testCases := []struct {
-		expected string
-		email    string
-	}{
-		// "github-test@xXxXx.iam.gserviceaccount.com"
-
-		{
-			expected: "one-123",
-			email:    "test@one-123.iam.gserviceaccount.com",
-		},
-
-		{
-			expected: "two-prod-123",
-			email:    "test@two-prod-123.iam.gserviceaccount.com",
-		},
-
-		{
-			expected: "",
-			email:    "test@two-prod-234-iam.gserviceaccount.com",
-		},
-
-		{
-			expected: "",
-			email:    "two-prod-234-iam.gserviceaccount.com",
-		},
-
-		{
-			expected: "",
-			email:    "two-prod-234-iam.example.com",
-		},
-
-		{
-			expected: "",
-			email:    "foo@two-prod-234-iam.example.com",
-		},
-
-		{
-			expected: "",
-			email:    "foo@.example.com",
-		},
-
-		{
-			expected: "",
-			email:    "example.com",
-		},
-	}
-
-	for _, tc := range testCases {
-		assert.Equal(t, tc.expected, getProjectFromServiceAccount(tc.email), tc.email)
-	}
-}
-
 func TestValidateRepoToServiceAccountMap(t *testing.T) {
 	testCases := []struct {
 		expected bool

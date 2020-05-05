@@ -62,23 +62,6 @@ func validateGoogleServiceAccountEmail(email string) bool {
 	return match
 }
 
-func getProjectFromServiceAccount(email string) string {
-	if !validateGoogleServiceAccountEmail(email) {
-		return ""
-	}
-
-	address := strings.Split(email, "@")
-	if len(address) != 2 {
-		return ""
-	}
-
-	domain := address[1]
-	splitDomain := strings.Split(domain, ".")
-
-	return splitDomain[0]
-
-}
-
 type IamServiceAccountClient struct {
 	service *iam.Service
 	ctx     *context.Context
