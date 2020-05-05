@@ -11,6 +11,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/joonix/log v0.0.0-20200409080653-9c1d2ceb5f1d
 	github.com/sirupsen/logrus v1.5.0
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	google.golang.org/api v0.22.0

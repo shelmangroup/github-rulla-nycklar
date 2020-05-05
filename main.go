@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -35,6 +36,28 @@ var (
 
 	secretName = kingpin.Flag("secret-name", "Github Secret name").Default("GOOGLE_APPLICATION_CREDENTIALS").String()
 )
+
+func validateGoogleServiceAccountEmail(email string) bool {
+	match, _ := regexp.MatchString("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.iam\\.gserviceaccount\\.com$)", email)
+	return match
+}
+
+func getProjectFromServiceAccount(email string) string {
+	if !validateGoogleServiceAccountEmail(email) {
+		return ""
+	}
+
+	address := strings.Split(email, "@")
+	if len(address) != 2 {
+		return ""
+	}
+
+	domain := address[1]
+	splitDomain := strings.Split(domain, ".")
+
+	return splitDomain[0]
+
+}
 
 type IamServiceAccountClient struct {
 	service *iam.Service
