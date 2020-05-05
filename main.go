@@ -8,8 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
+	"time"
 
 	"github.com/google/go-github/v31/github"
 
@@ -83,7 +82,7 @@ func (i *IamServiceAccountClient) createKey(serviceAccountEmail string) (*iam.Se
 	if err != nil {
 		return nil, fmt.Errorf("Projects.ServiceAccounts.Keys.Create: %v", err)
 	}
-	log.Printf("Created key: %v", key.Name)
+	log.Infof("Created key: %v", key.Name)
 	return key, nil
 }
 
@@ -94,7 +93,7 @@ func (i *IamServiceAccountClient) deleteKey(fullKeyName string) error {
 	if err != nil {
 		return fmt.Errorf("Projects.ServiceAccounts.Keys.Delete: %v", err)
 	}
-	log.Printf("Deleted key: %v", fullKeyName)
+	log.Infof("Deleted key: %v", fullKeyName)
 	return nil
 }
 
@@ -105,9 +104,6 @@ func (i *IamServiceAccountClient) listKeys(serviceAccountEmail string) ([]*iam.S
 	if err != nil {
 		return nil, fmt.Errorf("Projects.ServiceAccounts.Keys.List: %v", err)
 	}
-	for _, key := range response.Keys {
-		log.Printf("Listing key: %v", key.Name)
-	}
 	return response.Keys, nil
 }
 
@@ -117,13 +113,10 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf(spew.Sprintf("service account keys: %+v", keys))
-
-	// cant be deleted, should always exist even if no user keys have ben added
-	systemManagedKey := keys[len(keys)-1]
 
 	for _, key := range keys {
-		if systemManagedKey.Name == key.Name {
+		log.Debugf("service account key: (%v) ValidAfterTime: (%v)  ValidBeforeTime: (%v)", key.Name, key.ValidAfterTime, key.ValidBeforeTime)
+		if i.isSystemMangedKey(key) {
 			continue
 		}
 
@@ -139,6 +132,22 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 	}
 	return key, nil
 
+}
+
+func (i *IamServiceAccountClient) isSystemMangedKey(key *iam.ServiceAccountKey) bool {
+	/*
+		user managed keys have a valid before time of forever
+		ValidAfterTime: (2020-05-05T13:34:26Z)  ValidBeforeTime: (9999-12-31T23:59:59Z)
+
+		system managed keys have a valid before time less then two years + a few days
+		ValidAfterTime: (2020-05-04T13:18:54Z)  ValidBeforeTime: (2022-05-08T04:58:36Z)
+	*/
+	beforeTs, err := time.Parse(time.RFC3339, key.ValidBeforeTime)
+	if err != nil {
+		return false
+	}
+
+	return beforeTs.Year() != 9999
 }
 
 func main() {
