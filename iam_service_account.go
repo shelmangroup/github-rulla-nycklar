@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -62,9 +63,17 @@ func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.Se
 		return nil, err
 	}
 
-	for _, key := range keys {
+	keysToDelete := i.keysToDelete(keys)
+
+	for _, key := range keysToDelete {
+		fmt.Printf("service account key: (%v) ValidAfterTime: (%v)  ValidBeforeTime: (%v)\n", key.Name, key.ValidAfterTime, key.ValidBeforeTime)
+	}
+
+	for _, key := range keysToDelete {
 		log.Debugf("service account key: (%v) ValidAfterTime: (%v)  ValidBeforeTime: (%v)", key.Name, key.ValidAfterTime, key.ValidBeforeTime)
+
 		if i.isSystemMangedKey(key) {
+			log.Debugf("found system managed key: (%v)", key.Name)
 			continue
 		}
 
@@ -98,22 +107,24 @@ func (i *IamServiceAccountClient) isSystemMangedKey(key *iam.ServiceAccountKey) 
 	return beforeTs.Year() != 9999
 }
 
-func (i *IamServiceAccountClient) keyToDelete(keys []*iam.ServiceAccountKey) []*iam.ServiceAccountKey {
+func (i *IamServiceAccountClient) keysToDelete(keys []*iam.ServiceAccountKey) []*iam.ServiceAccountKey {
 	maxKeys := 3
+	numOfKeysToDelete := len(keys) - maxKeys
 	var toDelete []*iam.ServiceAccountKey
 
-	if len(keys) <= maxKeys {
+	if len(keys) < maxKeys {
 		return toDelete
 	}
-	// create a list of keys that is ordered by oldest to latest valid after time.
 
-	for _, key := range keys {
-		log.Debugf("service account key: (%v) ValidAfterTime: (%v)  ValidBeforeTime: (%v)", key.Name, key.ValidAfterTime, key.ValidBeforeTime)
-		if i.isSystemMangedKey(key) {
-			continue
-		}
+	// order keys from oldest to newest
+	sort.SliceStable(keys, func(i, j int) bool {
+		return keys[i].ValidAfterTime > keys[j].ValidBeforeTime
+	})
 
+	// remove system managed key since it we want to pop oldest keys from list
+	if i.isSystemMangedKey(keys[0]) {
+		keys = append(keys[:0], keys[0+1:]...)
 	}
 
-	return toDelete
+	return keys[len(keys)-numOfKeysToDelete:]
 }
