@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/google/go-github/v31/github"
 
@@ -16,7 +14,6 @@ import (
 	joonix "github.com/joonix/log"
 	gsw "github.com/shelmangroup/github-rulla-nycklar/pkg"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/api/iam/v1"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -61,96 +58,17 @@ func validateGoogleServiceAccountEmail(email string) bool {
 	return match
 }
 
-type IamServiceAccountClient struct {
-	service *iam.Service
-	ctx     *context.Context
-}
-
-func NewIamClient(ctx context.Context) *IamServiceAccountClient {
-	service, err := iam.NewService(ctx)
-	if err != nil {
-		log.Fatalf("iam.NewService: %v", err)
-	}
-	return &IamServiceAccountClient{service: service}
-}
-
-// createKey creates a service account key.
-func (i *IamServiceAccountClient) createKey(serviceAccountEmail string) (*iam.ServiceAccountKey, error) {
-	resource := "projects/-/serviceAccounts/" + serviceAccountEmail
-	request := &iam.CreateServiceAccountKeyRequest{}
-	key, err := i.service.Projects.ServiceAccounts.Keys.Create(resource, request).Do()
-	if err != nil {
-		return nil, fmt.Errorf("Projects.ServiceAccounts.Keys.Create: %v", err)
-	}
-	log.Infof("Created key: %v", key.Name)
-	return key, nil
-}
-
-// deleteKey deletes a service account key.
-func (i *IamServiceAccountClient) deleteKey(fullKeyName string) error {
-	var err error
-	_, err = i.service.Projects.ServiceAccounts.Keys.Delete(fullKeyName).Do()
-	if err != nil {
-		return fmt.Errorf("Projects.ServiceAccounts.Keys.Delete: %v", err)
-	}
-	log.Infof("Deleted key: %v", fullKeyName)
-	return nil
-}
-
-// listKey lists a service account's keys.
-func (i *IamServiceAccountClient) listKeys(serviceAccountEmail string) ([]*iam.ServiceAccountKey, error) {
-	resource := "projects/-/serviceAccounts/" + serviceAccountEmail
-	response, err := i.service.Projects.ServiceAccounts.Keys.List(resource).Do()
-	if err != nil {
-		return nil, fmt.Errorf("Projects.ServiceAccounts.Keys.List: %v", err)
-	}
-	return response.Keys, nil
-}
-
-// rotateKey, and remove old keys if exists
-func (i *IamServiceAccountClient) rotateKey(serviceAccountEmail string) (*iam.ServiceAccountKey, error) {
-	keys, err := i.listKeys(serviceAccountEmail)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range keys {
-		log.Debugf("service account key: (%v) ValidAfterTime: (%v)  ValidBeforeTime: (%v)", key.Name, key.ValidAfterTime, key.ValidBeforeTime)
-		if i.isSystemMangedKey(key) {
-			continue
-		}
-
-		err = i.deleteKey(key.Name)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	key, err := i.createKey(serviceAccountEmail)
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
-
-}
-
-func (i *IamServiceAccountClient) isSystemMangedKey(key *iam.ServiceAccountKey) bool {
-	/*
-		user managed keys have a valid before time of forever
-		ValidAfterTime: (2020-05-05T13:34:26Z)  ValidBeforeTime: (9999-12-31T23:59:59Z)
-
-		system managed keys have a valid before time less then two years + a few days
-		ValidAfterTime: (2020-05-04T13:18:54Z)  ValidBeforeTime: (2022-05-08T04:58:36Z)
-	*/
-	beforeTs, err := time.Parse(time.RFC3339, key.ValidBeforeTime)
-	if err != nil {
-		return false
-	}
-
-	return beforeTs.Year() != 9999
-}
-
 func main() {
+
+	/*
+		change they way the service account keys are removed. look in the
+		valid after time and find the older and remove it. If we keep
+		2-3 keys and have a rotation interval of like a few hours that
+		should be safe if we have longer running things. ?
+
+		link to usage limits in a github action. It's long
+		https://help.github.com/en/actions/getting-started-with-github-actions/about-github-actions#usage-limits
+	*/
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.CommandLine.DefaultEnvars()
