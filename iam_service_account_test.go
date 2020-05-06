@@ -39,11 +39,14 @@ func TestIsSystemManagedKey(t *testing.T) {
 }
 
 func TestKeysToDelete(t *testing.T) {
+
 	testCases := []struct {
+		name     string
 		expected []*iam.ServiceAccountKey
 		input    []*iam.ServiceAccountKey
 	}{
 		{
+			name: "one system key and 3 user keys, expecting one user key to be deleted",
 			expected: []*iam.ServiceAccountKey{
 				{ValidAfterTime: "2020-05-05T13:34:26Z", ValidBeforeTime: "9999-12-31T23:59:59Z", Name: "b"},
 			},
@@ -56,6 +59,7 @@ func TestKeysToDelete(t *testing.T) {
 		},
 
 		{
+			name:     "one system key and two user keys, expecting that no keys are deleted",
 			expected: []*iam.ServiceAccountKey{},
 			input: []*iam.ServiceAccountKey{
 				{ValidAfterTime: "2020-05-06T13:34:26Z", ValidBeforeTime: "9999-12-31T23:59:59Z", Name: "c"},
@@ -65,6 +69,7 @@ func TestKeysToDelete(t *testing.T) {
 		},
 
 		{
+			name:     "one system key and one user key, expecting that no keys are deleted",
 			expected: []*iam.ServiceAccountKey{},
 			input: []*iam.ServiceAccountKey{
 				{ValidAfterTime: "2020-05-04T13:34:26Z", ValidBeforeTime: "2022-05-08T04:58:36Z", Name: "a"},
@@ -76,11 +81,11 @@ func TestKeysToDelete(t *testing.T) {
 	iamClient := IamServiceAccountClient{}
 	for _, tc := range testCases {
 		output := iamClient.keysToDelete(tc.input)
-		assert.Equal(t, len(tc.expected), len(output))
+		assert.Equal(t, len(tc.expected), len(output), tc.name)
 		if len(tc.expected) == 0 && len(output) == 0 {
 			continue
 		}
-		assert.True(t, reflect.DeepEqual(output, tc.expected), tc.input)
+		assert.True(t, reflect.DeepEqual(output, tc.expected), tc.name)
 
 	}
 }

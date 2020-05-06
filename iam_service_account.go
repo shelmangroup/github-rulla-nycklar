@@ -110,21 +110,25 @@ func (i *IamServiceAccountClient) isSystemMangedKey(key *iam.ServiceAccountKey) 
 func (i *IamServiceAccountClient) keysToDelete(keys []*iam.ServiceAccountKey) []*iam.ServiceAccountKey {
 	maxKeys := 3
 	numOfKeysToDelete := len(keys) - maxKeys
-	var toDelete []*iam.ServiceAccountKey
+	var toDelete, copyKeys []*iam.ServiceAccountKey
+	for _, key := range keys {
+		copyKeys = append(copyKeys, key)
+	}
 
-	if len(keys) < maxKeys {
+	if len(copyKeys) < maxKeys {
 		return toDelete
 	}
 
 	// order keys from oldest to newest
-	sort.SliceStable(keys, func(i, j int) bool {
-		return keys[i].ValidAfterTime > keys[j].ValidBeforeTime
+	sort.SliceStable(copyKeys, func(i, j int) bool {
+		return copyKeys[i].ValidAfterTime > copyKeys[j].ValidBeforeTime
 	})
 
 	// remove system managed key since it we want to pop oldest keys from list
-	if i.isSystemMangedKey(keys[0]) {
-		keys = append(keys[:0], keys[0+1:]...)
+	if i.isSystemMangedKey(copyKeys[0]) {
+		copyKeys = append(copyKeys[:0], copyKeys[0+1:]...)
 	}
+	// todo: some bug here, we are not removing the system key from the end of the list
 
-	return keys[len(keys)-numOfKeysToDelete:]
+	return copyKeys[len(copyKeys)-numOfKeysToDelete:]
 }
