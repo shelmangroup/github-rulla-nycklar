@@ -9,31 +9,30 @@ on:
 
 jobs:
   build-publish:
-    name: go build test fmt check publish container
+    name: go build test fmt check
     runs-on: ubuntu-latest
     steps:
 
     - name: Checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@v2
 
-    # Setup gcloud CLI
-    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-      with:
-        version: '270.0.0'
-        service_account_email: ${{ secrets.EMAIL }}
-        service_account_key: ${{ secrets.KEY }}
-
-    # Configure docker to use the gcloud command-line tool as a credential helper
-    - run: |
-        # Set up docker to authenticate
-        # via gcloud command-line tool.
-        gcloud auth configure-docker
-      
-    # Build the Docker image
-    - name: Build
+    - name: Build container
       run: make container        
 
-    # Push the Docker image to Google Container Registry
-    - name: Publish
-      run: make container-push
-        
+    - name: Init gcloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '290.0.1'
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+
+    - run: gcloud info
+
+    - name: env
+      run: |-
+        env
+
+    - name: credential path
+      run: |-
+        ls $GOOGLE_APPLICATION_CREDENTIALS
