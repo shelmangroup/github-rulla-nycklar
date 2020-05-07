@@ -16,9 +16,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Build container
-      run: make container        
-
     - name: Init gcloud
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
