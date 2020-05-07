@@ -42,6 +42,7 @@ jobs:
     - name: run rulla nycklar
       run: |-
         docker run \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/credentials.json \
             -v $GOOGLE_APPLICATION_CREDENTIALS:/credentials.json \
             -v $(pwd)/github-private-key.pem:/private-key.pem \
             --entrypoint /bin/github-rulla-nycklar \
