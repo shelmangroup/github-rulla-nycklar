@@ -14,10 +14,13 @@ manually update the secrets.
 To support the problem we have. We have chosen to rotate the secrets using this 
 fancy program. This program them uploads the new version on the secret to a 
 known secret name that is the same in every repo this program is managing.
+This secret is a google service account, using this service account you
+have the option to get secrets directly from google secret manger [link](https://github.com/GoogleCloudPlatform/github-actions/tree/master/get-secretmanager-secrets)
 
 limitations. 
-* only working with one google project
-* one repo means one service account in google cloud
+* one repo means one service account in google cloud.
+* the name of the service account secret will be the same in all repos
+* only one key is handled and that is the service account.
 
 ### Usage
 
