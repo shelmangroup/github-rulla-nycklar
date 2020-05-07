@@ -26,11 +26,31 @@ jobs:
 
     - run: gcloud info
 
-    - name: env
+    - name: private key to file
+      env:
+        PRIVATE_PEM: ${{ secrets.PRIVATE_KEY_PEM }}
       run: |-
-        env
+        echo "$PRIVATE_PEM" | base64 -d > github-private-key.pem
 
-    - name: credential path
+    - name: look in path
       run: |-
         ls $GOOGLE_APPLICATION_CREDENTIALS && \
-        pwd
+        pwd && \
+        env
+
+
+    - name: run rulla nycklar
+      run: |-
+        docker run \
+            -v $(pwd)/$GOOGLE_APPLICATION_CREDENTIALS:/credentials.json \
+            -v $(pwd)/github-private-key.pem:/private-key.pem \
+            --entrypoint /bin/github-rulla-nycklar \
+            quay.io/shelman/github-rulla-nycklar:latest \
+              --github-key-file="/private-key.pem" \
+              --github-app-id=62880 \
+              --github-install-id=8467539 \
+              --owner=shelmangroup \
+              --log-level=info \
+              --repo-to-email="test-foo=github-test-foo@xXxXx.iam.gserviceaccount.com" \
+              --repo-to-email="test-bar=github-test-bar@xXxXx.iam.gserviceaccount.com" \
+              --secret-name="GCP_SERVICE_ACCOUNT_KEY"
