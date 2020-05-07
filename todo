@@ -1,3 +1,2 @@
-- rotate keys but leave a graice period before removing the old key
 - run this as a github action with a scheduel run at N interval.
 - document what permissions is needed to run the thing. `Service Account Key Admin` is needed
