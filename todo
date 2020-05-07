@@ -1,2 +1,5 @@
 - run this as a github action with a scheduel run at N interval.
 - document what permissions is needed to run the thing. `Service Account Key Admin` is needed
+
+- add permissions to service accounts in testing projects and try to use the service account in an action to
+  confirm the full workflow
