@@ -35,4 +35,5 @@ jobs:
 
     - name: credential path
       run: |-
-        ls $GOOGLE_APPLICATION_CREDENTIALS
+        ls $GOOGLE_APPLICATION_CREDENTIALS && \
+        pwd
