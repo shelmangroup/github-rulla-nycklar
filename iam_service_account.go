@@ -124,11 +124,10 @@ func (i *IamServiceAccountClient) keysToDelete(keys []*iam.ServiceAccountKey) []
 		return copyKeys[i].ValidAfterTime > copyKeys[j].ValidBeforeTime
 	})
 
-	// remove system managed key since it we want to pop oldest keys from list
+	// remove system managed key, we want to remove oldest keys from list
 	if i.isSystemMangedKey(copyKeys[0]) {
 		copyKeys = append(copyKeys[:0], copyKeys[0+1:]...)
 	}
-	// todo: some bug here, we are not removing the system key from the end of the list
 
 	return copyKeys[len(copyKeys)-numOfKeysToDelete:]
 }
