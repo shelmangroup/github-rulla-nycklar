@@ -1,0 +1,52 @@
+name: scheduled run to rotate keys
+
+on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 1 * * *'
+
+  push:
+    branches:
+    - master
+
+jobs:
+  rotation-of-service-account-keys:
+    name: scheduled rotation or push to master
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Init gcloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '290.0.1'
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+
+    - name: private key to file
+      env:
+        PRIVATE_PEM: ${{ secrets.PRIVATE_KEY_PEM }}
+      run: |-
+        echo "$PRIVATE_PEM" | base64 -d > github-private-key.pem
+
+    - name: run rulla nycklar
+      env:
+        APP_ID: ${{ secrets.APP_ID}}
+        INSTALL_ID: ${{ secrets.INSTALL_ID}}
+        ORG: ${{ secrets.ORG}}
+      run: |-
+        docker run \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/credentials.json \
+            -v $GOOGLE_APPLICATION_CREDENTIALS:/credentials.json \
+            -v $(pwd)/github-private-key.pem:/private-key.pem \
+            --entrypoint /bin/github-rulla-nycklar \
+            quay.io/shelman/github-rulla-nycklar:latest \
+              --github-key-file="/private-key.pem" \
+              --github-app-id=$APP_ID\
+              --github-install-id=$INSTALL_ID\
+              --owner=$ORG\
+              --repo-to-email="<name of repo in org>=<service account email>" \
+              --secret-name="GCP_SERVICE_ACCOUNT_KEY"
