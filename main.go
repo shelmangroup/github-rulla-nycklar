@@ -44,17 +44,6 @@ func validateGoogleServiceAccountEmail(email string) bool {
 
 func main() {
 
-	/*
-		Note.
-		change they way the service account keys are removed. look in the
-		valid after time and find the older and remove it. If we keep
-		2-3 keys and have a rotation interval of like a few hours that
-		should be safe if we have longer running things. ?
-
-		link to usage limits in a github action. It's long
-		https://help.github.com/en/actions/getting-started-with-github-actions/about-github-actions#usage-limits
-	*/
-
 	var (
 		logJSON        = kingpin.Flag("log-json", "Use structured logging in JSON format").Default("false").Bool()
 		logFluentd     = kingpin.Flag("log-fluentd", "Use structured logging in GKE Fluentd format").Default("false").Bool()
@@ -120,13 +109,6 @@ func run(appID, installID int64, owner, privateKeyFile, secretName string, repoT
 	ctx := context.Background()
 	iamClient := NewIamClient(ctx)
 	//
-
-	/*
-		To find the install id on github go to
-		Org > Settings > Installed Github Apps > AppName > Configure
-		in the URL you can see the install ID
-		https://github.com/organizations/<ORG>/settings/installations/<install id>
-	*/
 
 	getKey := func(email string) []byte {
 		key, err := iamClient.rotateKey(email)
