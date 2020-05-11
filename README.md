@@ -87,12 +87,11 @@ base64 encoded see list.
 NOTE. to base64 encode a file and copy to osx clipboard `cat credentials.json | base64 | pbcopy`
 
 - Secret name `GCP_PROJECT_ID` string of project id were the service account lives
-- Secret name `GCP_SA_KEY` base64 encoded contect of the service account json
-- Secret name `PRIVATE_KEY_PEM` base64 encoded content of the github private key pem
 - Secret name `ORG` string the github org that it's running in
 - Secret name `INSTALL_ID` string the github app install id 
 - Secret name `APP_ID` string the github app id
-
+- Secret name `GCP_SA_KEY` base64 encoded contect of the service account json
+- Secret name `PRIVATE_KEY_PEM` base64 encoded content of the github private key pem
 
 
 
