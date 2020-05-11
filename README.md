@@ -6,7 +6,7 @@ In a World of cloud we need secrets in a form of service account sometimes. The 
 need to be rotated to improve security to lower the risk if a secret gets feet. 
 
 In this case we are working with the integration inbetween google cloud platform 
-and github.com. We like service account and we like to use them in github actions
+and github.com. We like service accounts and we like to use them in github actions
 as secrets. To now rotate the secrets and keep things secure, we don't want to 
 manually update the secrets.
 
@@ -23,11 +23,7 @@ limitations.
 * only one key is handled and that is the service account.
 
 ### Usage
-
-finding github install id To find the install id on github go to 
-`Org > Settings > Installed Github Apps > AppName > Configure` in the URL you 
-can see the install ID `https://github.com/organizations/<ORG>/settings/installations/<install id>`
-
+example
 ```bash
 ./_bin/github-rulla-nycklar \
     --github-key-file="<name of key>.private-key.pem" \
@@ -58,6 +54,11 @@ The app requires these permissions:
 | Secrets | Read & write |
 
 
+###### Get github install id
+To find the install id on github go to `Org > Settings > Installed Github Apps > AppName > Configure` 
+in the URL you can see the install ID `https://github.com/organizations/<ORG>/settings/installations/<install id>`
+
+
 ###### Create google service account key.
 The service account can act in multiple google project. To allow this the 
 service account need to have `Service Account Key Admin` to be allowed to create/delete/list 
@@ -80,10 +81,10 @@ using this fill in the information and place it in `.github/workflows/`
 
 
 ###### Create Github secrets
-In project were we run the github action we need secrets. All secrets needs to be
-base64 encoded not the project id!. 
+In project were we run the github action we need secrets. Some secrets needs to be
+base64 encoded see list. 
 
-base64 encode file and copy to osx clipboard `cat credentials.json | base64 | pbcopy`
+NOTE. to base64 encode a file and copy to osx clipboard `cat credentials.json | base64 | pbcopy`
 
 - Secret name `GCP_PROJECT_ID` string of project id were the service account lives
 - Secret name `GCP_SA_KEY` base64 encoded contect of the service account json
@@ -91,6 +92,8 @@ base64 encode file and copy to osx clipboard `cat credentials.json | base64 | pb
 - Secret name `ORG` string the github org that it's running in
 - Secret name `INSTALL_ID` string the github app install id 
 - Secret name `APP_ID` string the github app id
+
+
 
 
 ### Dev setup
