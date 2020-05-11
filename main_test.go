@@ -11,7 +11,6 @@ func TestValidateServiceAccount(t *testing.T) {
 		expected bool
 		email    string
 	}{
-		// "github-test@xXxXx.iam.gserviceaccount.com"
 
 		{
 			expected: true,
@@ -106,8 +105,8 @@ func TestCLI(t *testing.T) {
 	)
 
 	repoToEmail := map[string]string{
-		"test-foo": "github-test-foo@xXxXx.iam.gserviceaccount.com",
-		"test-bar": "github-test-bar@xXxXx.iam.gserviceaccount.com",
+		"test-foo": "github-test-foo@dev-123.iam.gserviceaccount.com",
+		"test-bar": "github-test-bar@dev-1600.iam.gserviceaccount.com",
 	}
 
 	run(appID, installID, owner, privateKeyFile, secretName, repoToEmail)
