@@ -2,7 +2,7 @@
 
 
 ### Problem statement
-In a World of cloud we need secrets in a form of service account sometimes. The also 
+In a World of cloud we need secrets in a form of service account sometimes. They also 
 need to be rotated to improve security to lower the risk if a secret gets feet. 
 
 In this case we are working with the integration inbetween google cloud platform 
