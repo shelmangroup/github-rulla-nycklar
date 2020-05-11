@@ -1,5 +1,5 @@
 REPO=github-rulla-nycklar
-CONTAINER=quay.io/shelmangroup/github-rulla-nycklar
+CONTAINER=quay.io/shelman/github-rulla-nycklar
 VERSION ?= $(shell ./hacks/git-version)
 LD_FLAGS="-X main.Version=$(VERSION) -w -s -extldflags \"-static\" "
 

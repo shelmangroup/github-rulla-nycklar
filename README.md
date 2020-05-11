@@ -1,5 +1,7 @@
 # github-rulla-nycklar
 
+container image: `quay.io/shelman/github-rulla-nycklar`
+
 
 ### Problem statement
 In a World of cloud we need secrets in a form of service account sometimes. They also 
