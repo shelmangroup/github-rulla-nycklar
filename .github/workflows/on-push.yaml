@@ -1,11 +1,9 @@
-name: on-pr go build/test
+name: push go build/test
 
 on:
   push:
     paths-ignore:
     - 'template/**'
-    branches-ignore:
-    - 'master'
 
 jobs:
   go-build:
