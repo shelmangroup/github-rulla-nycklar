@@ -68,7 +68,7 @@ service account keys.
 
 - Create service account 
 - Get Service Account key 
-- Assigt `Service Account Key Admin` in all projects that need to have keys rotated
+- Assign `Service Account Key Admin` in all projects that need to have keys rotated
 
 
 ###### Create a github repo that can host the github action
@@ -92,7 +92,7 @@ NOTE. to base64 encode a file and copy to osx clipboard `cat credentials.json | 
 - Secret name `ORG` string the github org that it's running in
 - Secret name `INSTALL_ID` string the github app install id 
 - Secret name `APP_ID` string the github app id
-- Secret name `GCP_SA_KEY` base64 encoded contect of the service account json
+- Secret name `GCP_SA_KEY` base64 encoded content of the service account json
 - Secret name `PRIVATE_KEY_PEM` base64 encoded content of the github private key pem
 
 
