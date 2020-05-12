@@ -1,0 +1,10 @@
+github-secrets-sync
+_bin
+_release
+.version
+.idea
+./deployment.yaml
+vendor/
+*.json
+rulla-nyckel-bot.2020-04-29.private-key.pem
+xXxxX-4b336ad3388d.json

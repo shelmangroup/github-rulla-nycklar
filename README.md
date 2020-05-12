@@ -96,7 +96,6 @@ NOTE. to base64 encode a file and copy to osx clipboard `cat credentials.json | 
 - Secret name `PRIVATE_KEY_PEM` base64 encoded content of the github private key pem
 
 
-
 ### Dev setup
 ```
 $ go mod vendor
