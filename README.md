@@ -3,8 +3,8 @@
 ![execution flow](img/exec-flow.png)
 
 
-container image: `quay.io/shelman/github-rulla-nycklar`
-example bot [repo](https://github.com/shelmangroup/rulla-nycklar-bot-example) used to schedule using github actions
+* container image: `quay.io/shelman/github-rulla-nycklar`
+* example bot [repo](https://github.com/shelmangroup/rulla-nycklar-bot-example) used to schedule using github actions
 
 
 ### Problem statement
