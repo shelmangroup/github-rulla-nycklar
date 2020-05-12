@@ -120,23 +120,18 @@ func run(appID, installID int64, owner, privateKeyFile, secretName string, repoT
 	}
 	//
 
-	writeSecret := func(repo string, key []byte) error {
+	writeSecret := func(repo string, key []byte) {
 		status, err := secretWriter.Write(owner, repo, secretName, key)
 		if err != nil {
-			log.Errorf("Ops.. %s\n", err.Error())
-			return err
+			log.Fatalf("Ops.. %s\n", err.Error())
 		} else {
 			log.Infof("secret write status: %s\n", status)
 		}
-		return nil
 	}
 
 	for repo, email := range repoToEmail {
 		log.Debugf("repo=email (%v=%v)", repo, email)
 		keyBytes := getKey(email)
-		err := writeSecret(repo, keyBytes)
-		if err != nil {
-			log.Fatalf("Ops.. %s\n", err.Error())
-		}
+		writeSecret(repo, keyBytes)
 	}
 }
