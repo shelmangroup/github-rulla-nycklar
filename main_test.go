@@ -97,8 +97,8 @@ func TestValidateRepoToServiceAccountMap(t *testing.T) {
 func TestCLI(t *testing.T) {
 	t.Skip("only for use when debugging locally to do live debugging")
 	var (
-		appID          int64 = 62880
-		installID      int64 = 8467539
+		appID          int64 = 62180
+		installID      int64 = 8467532
 		owner                = "shelmangroup"
 		privateKeyFile       = "rulla-nyckel-bot.2020-04-29.private-key.pem"
 		secretName           = "SuperHemligSecretGoland"
