@@ -1,5 +1,8 @@
 # github-rulla-nycklar
 
+![execution flow](img/exec-flow.png)
+
+
 container image: `quay.io/shelman/github-rulla-nycklar`
 
 
