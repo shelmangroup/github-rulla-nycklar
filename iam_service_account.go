@@ -131,3 +131,16 @@ func (i *IamServiceAccountClient) keysToDelete(keys []*iam.ServiceAccountKey) []
 
 	return copyKeys[len(copyKeys)-numOfKeysToDelete:]
 }
+
+func (i *IamServiceAccountClient) KeyExists(serviceAccountEmail string) (bool, error) {
+	resource := "projects/-/serviceAccounts/" + serviceAccountEmail
+	response, err := i.service.Projects.ServiceAccounts.Get(resource).Do()
+	fmt.Println(response)
+	if err != nil {
+		return false, fmt.Errorf("Projects.ServiceAccounts.Keys.Get: %v", err)
+
+	}
+
+	exists := response.Email == serviceAccountEmail
+	return exists, nil
+}

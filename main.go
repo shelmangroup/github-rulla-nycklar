@@ -131,7 +131,15 @@ func run(appID, installID int64, owner, privateKeyFile, secretName string, repoT
 
 	for repo, email := range repoToEmail {
 		log.Debugf("repo=email (%v=%v)", repo, email)
-		keyBytes := getKey(email)
-		writeSecret(repo, keyBytes)
+
+		exists, err := iamClient.KeyExists(email)
+		if err != nil {
+			log.Errorf("Ops failed to get service account %v you dont have permission to read or the service account does not exist. got err %v", email, err)
+			continue
+		}
+		if exists {
+			keyBytes := getKey(email)
+			writeSecret(repo, keyBytes)
+		}
 	}
 }
